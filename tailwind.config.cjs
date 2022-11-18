@@ -20,6 +20,9 @@ module.exports = {
         400: "#666666",
         500: "#333333",
       },
+      black: {
+        DEFAULT: "#000000",
+      },
     },
   },
   plugins: [],
