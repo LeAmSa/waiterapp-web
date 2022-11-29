@@ -2,18 +2,31 @@ import { useState } from "react";
 
 import { Order, IconsEnum } from "../@types/Order";
 
+import { api } from "../utils/api";
+
 import { Button } from "./Button";
 import { OrderModal } from "./OrderModal";
+
+import { toast } from "react-toastify";
 
 interface BoardProps {
   title: string;
   icon: "WAITING" | "IN_PRODUCTION" | "DONE";
   orders: Order[];
+  onChangeOrderStatus: (orderId: string, status: Order["status"]) => void;
+  onCancelOrder: (orderId: string) => void;
 }
 
-export function Board({ title, icon, orders }: BoardProps) {
+export function Board({
+  title,
+  icon,
+  orders,
+  onChangeOrderStatus,
+  onCancelOrder,
+}: BoardProps) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   function handleOpenOrderModal(order: Order) {
     setIsModalVisible(true);
@@ -24,6 +37,45 @@ export function Board({ title, icon, orders }: BoardProps) {
   function handleCloseModal() {
     setIsModalVisible(false);
     setSelectedOrder(null);
+  }
+
+  async function handleChangeOrderStatus() {
+    try {
+      setIsLoading(true);
+
+      const newStatus =
+        selectedOrder!.status === "WAITING" ? "IN_PRODUCTION" : "DONE";
+
+      await api.patch(`/orders/${selectedOrder!._id}`, { status: newStatus });
+
+      onChangeOrderStatus(selectedOrder!._id, newStatus);
+    } catch (error) {
+      console.log(error);
+      toast.error(
+        `Erro ao enviar o pedido da mesa ${selectedOrder!.table} para preparo.`
+      );
+    } finally {
+      setIsLoading(false);
+      setIsModalVisible(false);
+      toast.success(
+        `O pedido da mesa ${selectedOrder!.table} teve seu status alterado!`
+      );
+    }
+  }
+
+  async function handleCancelOrder() {
+    try {
+      setIsLoading(true);
+      await api.delete(`/orders/${selectedOrder!._id}`);
+    } catch (error) {
+      console.log(error);
+      toast.error(`Erro ao cancelar o pedido da mesa ${selectedOrder!.table}`);
+    } finally {
+      setIsLoading(false);
+      onCancelOrder(selectedOrder!._id);
+      handleCloseModal();
+      toast.success(`O pedido da mesa ${selectedOrder!.table} foi cancelado!`);
+    }
   }
 
   return (
@@ -51,6 +103,9 @@ export function Board({ title, icon, orders }: BoardProps) {
         visible={isModalVisible}
         order={selectedOrder}
         onCloseModal={handleCloseModal}
+        onChangeOrderStatus={handleChangeOrderStatus}
+        onCancelOrder={handleCancelOrder}
+        isLoading={isLoading}
       />
     </div>
   );

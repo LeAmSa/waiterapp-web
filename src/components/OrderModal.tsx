@@ -16,9 +16,19 @@ interface OrderModalProps {
   visible: boolean;
   order: Order | null;
   onCloseModal: () => void;
+  onCancelOrder: () => Promise<void>;
+  onChangeOrderStatus: () => void;
+  isLoading: boolean;
 }
 
-export function OrderModal({ visible, order, onCloseModal }: OrderModalProps) {
+export function OrderModal({
+  visible,
+  order,
+  onCloseModal,
+  onChangeOrderStatus,
+  onCancelOrder,
+  isLoading,
+}: OrderModalProps) {
   if (!visible || !order) {
     return null;
   }
@@ -77,11 +87,32 @@ export function OrderModal({ visible, order, onCloseModal }: OrderModalProps) {
         </div>
 
         <footer className="flex flex-col gap-4">
-          <button className="flex gap-2 items-center justify-center font-semibold px-6 py-3 bg-gray-500 text-gray-0 rounded-[48px]">
-            <span>{NextStepIconsEnum[order.status]}</span>
-            <span>{ButtonTitlesEnum[order.status]}</span>
+          {order.status !== "DONE" && (
+            <button
+              className={
+                !isLoading
+                  ? "flex gap-2 items-center justify-center font-semibold px-6 py-3 bg-gray-500 text-gray-0 rounded-[48px]"
+                  : "flex gap-2 items-center justify-center font-semibold px-6 py-3 bg-gray-500 text-gray-0 rounded-[48px] opacity-50 cursor-not-allowed"
+              }
+              disabled={isLoading}
+              onClick={onChangeOrderStatus}
+            >
+              <span>{NextStepIconsEnum[order.status]}</span>
+              <span>{ButtonTitlesEnum[order.status]}</span>
+            </button>
+          )}
+
+          <button
+            className={
+              !isLoading
+                ? "text-red font-semibold"
+                : "text-red font-semibold opacity-50 cursor-not-allowed"
+            }
+            onClick={onCancelOrder}
+            disabled={isLoading}
+          >
+            Cancelar pedido
           </button>
-          <button className="text-red font-semibold">Cancelar pedido</button>
         </footer>
       </div>
     </div>
